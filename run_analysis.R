@@ -1,0 +1,25 @@
+test<-read.table("UCI HAR Dataset/test/X_test.txt")
+train<-read.table("UCI HAR Dataset/train/X_train.txt")
+merged<-merge(test,train,all=TRUE)
+colnames<-read.table("UCI HAR Dataset/features.txt")
+names(merged)<-colnames[,"V2"]
+meancols<-grep("mean()",names(merged))
+stdcols<-grep("std()",names(merged))
+cols<-sort(union(meancols,stdcols))
+allcols<-c()
+for(i in cols) allcols<-append(allcols,merged[i])
+mergedred<-data.frame(allcols)
+
+testlabels<-read.table("UCI HAR Dataset/test/y_test.txt")
+trainlabels<-read.table("UCI HAR Dataset/train/y_train.txt")
+mergedlabels<-append(testlabels[,"V1"],trainlabels[,"V1"])
+classes<-factor(mergedlabels, labels=c("WALKING", "WALKING_UPSTAIRS", "WALKING_DOWNSTAIRS", "SITTING", "STANDING", "LAYING"))
+mergedred$classes<-classes
+subject_test<-read.table("UCI HAR Dataset/test/subject_test.txt")
+subject_train<-read.table("UCI HAR Dataset/train/subject_train.txt")
+mergedsubjects<-append(subject_test[,"V1"],subject_train[,"V1"])
+any(is.na(mergedred))
+mergedred$subjects<-mergedsubjects
+melted<-melt(mergedred,id.vars=c("classes","subjects"))
+ds<-dcast(melted,subjects + classes ~variable,mean)
+write.table(ds,file="assign_data.txt",row.name=FALSE)
